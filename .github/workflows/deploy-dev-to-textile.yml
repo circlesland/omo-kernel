@@ -1,0 +1,42 @@
+name: "Deploy Master"
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  bucket_push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    name: push textile bucket
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm run build
+
+      - name: push action
+        id: bucket
+        uses: textileio/github-action-buckets@master
+        with:
+          key: ${{ secrets.TEXTILE_ACCOUNT_KEY }}
+          secret: ${{ secrets.TEXTILE_ACCOUNT_SECRET }}
+          bucket: "master"
+          thread: ${{ secrets.TEXTILE_THREAD_DB }}
+          path: "public"
+          pattern: "**/*"
+      - run: echo "bucket - ${{ steps.bucket.outputs.key }}"
+      - run: echo "ipfs - ${{ steps.bucket.outputs.ipfs }}"
+      - run: echo "ipfs link - ${{ steps.bucket.outputs.ipfsUrl }}"
+      - run: echo "ipns - ${{ steps.bucket.outputs.ipns }}"
+      - run: echo "ipns link - ${{ steps.bucket.outputs.ipnsUrl }}"
+      - run: echo "hub - ${{ steps.bucket.outputs.hub }}"
+      - run: echo "www - ${{ steps.bucket.outputs.www }}"
