@@ -22,7 +22,7 @@ jobs:
         with:
           key: ${{ secrets.TEXTILE_ACCOUNT_KEY }}
           secret: ${{ secrets.TEXTILE_ACCOUNT_SECRET }}
-          bucket: "master"
+          bucket: "omo-kernel"
           thread: ${{ secrets.TEXTILE_THREAD_DB }}
           path: "public"
           pattern: "**/*"
