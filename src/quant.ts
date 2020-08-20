@@ -1,7 +1,3 @@
-import Quant from "./Quant.svelte";
+import OmoKernel from "./omokernel.svelte";
 
-const quant = new Quant({
-  target: document.body,
-});
-
-export default quant;
+export default OmoKernel;
