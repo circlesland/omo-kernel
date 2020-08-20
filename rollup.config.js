@@ -7,8 +7,37 @@ import {
 } from 'rollup-plugin-terser';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
+import fs from "fs";
+import path from "path";
+
+const all = readDirectory(path.join(__dirname, "/src/quanta"));
 
 const production = !process.env.ROLLUP_WATCH;
+
+function readDirectory(dir, fileList = [])
+{
+  fs.readdirSync(dir).forEach(file =>
+  {
+    const filePath = path.join(dir, file)
+
+    if (fs.statSync(filePath).isDirectory())
+    {
+      fileList.push({
+        name: file,
+        path: filePath,
+        contents: Helper.readDirectory(filePath)
+      });
+    }
+    else
+    {
+      fileList.push({
+        name: file,
+        path: filePath
+      });
+    }
+  });
+  return fileList
+}
 
 function serve() {
   let server;
@@ -31,56 +60,63 @@ function serve() {
   };
 }
 
-export default {
-  input: 'src/quant.ts',
-  output: {
-    sourcemap: true,
-    format: 'iife',
-    name: 'quant',
-    file: 'public/build/bundle.js'
-  },
-  plugins: [
-    svelte({
-      customElement: true,
-      // enable run-time checks when not in production
-      dev: !production,
-      // we'll extract any component CSS out into
-      // a separate file - better for performance
-      css: css => {
-        css.write('public/build/bundle.css');
-      },
-      preprocess: sveltePreprocess({
-        postcss: true,
+function createRollupConfig(input, name) {
+  return {
+    input: input,//'src/quant.ts',
+    output: {
+      sourcemap: true,
+      format: 'iife',
+      name: name,
+      file: 'public/quanta/' + name + '.js'
+    },
+    plugins: [
+      svelte({
+        customElement: true,
+        // enable run-time checks when not in production
+        dev: !production,
+        // we'll extract any component CSS out into
+        // a separate file - better for performance
+        css: css => {
+          css.write('public/build/bundle.css');
+        },
+        preprocess: sveltePreprocess({
+          postcss: true,
+        }),
       }),
-    }),
 
-    // If you have external dependencies installed from
-    // npm, you'll most likely need these plugins. In
-    // some cases you'll need additional configuration -
-    // consult the documentation for details:
-    // https://github.com/rollup/plugins/tree/master/packages/commonjs
-    resolve({
-      browser: true,
-      dedupe: ['svelte']
-    }),
-    commonjs(),
-    typescript({
-      sourceMap: !production
-    }),
+      // If you have external dependencies installed from
+      // npm, you'll most likely need these plugins. In
+      // some cases you'll need additional configuration -
+      // consult the documentation for details:
+      // https://github.com/rollup/plugins/tree/master/packages/commonjs
+      resolve({
+        browser: true,
+        dedupe: ['svelte']
+      }),
+      commonjs(),
+      typescript({
+        sourceMap: !production
+      }),
 
-    // In dev mode, call `npm run start` once
-    // the bundle has been generated
-    !production && serve(),
+      // In dev mode, call `npm run start` once
+      // the bundle has been generated
+      !production && serve(),
 
-    // Watch the `public` directory and refresh the
-    // browser on changes when not in production
-    !production && livereload('public'),
+      // Watch the `public` directory and refresh the
+      // browser on changes when not in production
+      !production && livereload('public'),
 
-    // If we're building for production (npm run build
-    // instead of npm run dev), minify
-    production && terser()
-  ],
-  watch: {
-    clearScreen: false
+      // If we're building for production (npm run build
+      // instead of npm run dev), minify
+      production && terser()
+    ],
+    watch: {
+      clearScreen: false
+    }
   }
-};
+}
+
+let configArr = [];
+all.forEach(o => configArr.push(createRollupConfig(o.path, o.name)));
+
+export default configArr;
