@@ -1,11 +1,12 @@
 <script lang="ts">
-  let components = ["quanta/omo-core.svelte.js"];
+  let components = [
+    "quanta/omo-hello.svelte.js",
+    "quanta/omo-button.svelte.js",
+  ];
 </script>
 
 <style global>
   @tailwind base;
-  @tailwind components;
-  @tailwind utilities;
 </style>
 
 <svelte:head>
@@ -16,4 +17,5 @@
   {/each}
 </svelte:head>
 
-<omo-core />
+<omo-button />
+<omo-hello />
