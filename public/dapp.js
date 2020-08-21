@@ -1,10 +1,14 @@
 
 (function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
-this.hello = this.hello || {};
-this.hello.svelte = (function () {
+var dapp = (function () {
     'use strict';
 
     function noop() { }
+    function add_location(element, file, line, column, char) {
+        element.__svelte_meta = {
+            loc: { file, line, column, char }
+        };
+    }
     function run(fn) {
         return fn();
     }
@@ -17,11 +21,15 @@ this.hello.svelte = (function () {
     function is_function(thing) {
         return typeof thing === 'function';
     }
-    function not_equal(a, b) {
-        return a != a ? b == b : a !== b;
+    function safe_not_equal(a, b) {
+        return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
     }
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
+    }
+
+    function append(target, node) {
+        target.appendChild(node);
     }
     function insert(target, node, anchor) {
         target.insertBefore(node, anchor || null);
@@ -29,8 +37,29 @@ this.hello.svelte = (function () {
     function detach(node) {
         node.parentNode.removeChild(node);
     }
+    function destroy_each(iterations, detaching) {
+        for (let i = 0; i < iterations.length; i += 1) {
+            if (iterations[i])
+                iterations[i].d(detaching);
+        }
+    }
+    function element(name) {
+        return document.createElement(name);
+    }
     function text(data) {
         return document.createTextNode(data);
+    }
+    function space() {
+        return text(' ');
+    }
+    function empty() {
+        return text('');
+    }
+    function attr(node, attribute, value) {
+        if (value == null)
+            node.removeAttribute(attribute);
+        else if (node.getAttribute(attribute) !== value)
+            node.setAttribute(attribute, value);
     }
     function children(element) {
         return Array.from(element.childNodes);
@@ -211,49 +240,35 @@ this.hello.svelte = (function () {
         }
         set_current_component(parent_component);
     }
-    let SvelteElement;
-    if (typeof HTMLElement === 'function') {
-        SvelteElement = class extends HTMLElement {
-            constructor() {
-                super();
-                this.attachShadow({ mode: 'open' });
+    class SvelteComponent {
+        $destroy() {
+            destroy_component(this, 1);
+            this.$destroy = noop;
+        }
+        $on(type, callback) {
+            const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
+            callbacks.push(callback);
+            return () => {
+                const index = callbacks.indexOf(callback);
+                if (index !== -1)
+                    callbacks.splice(index, 1);
+            };
+        }
+        $set($$props) {
+            if (this.$$set && !is_empty($$props)) {
+                this.$$.skip_bound = true;
+                this.$$set($$props);
+                this.$$.skip_bound = false;
             }
-            connectedCallback() {
-                // @ts-ignore todo: improve typings
-                for (const key in this.$$.slotted) {
-                    // @ts-ignore todo: improve typings
-                    this.appendChild(this.$$.slotted[key]);
-                }
-            }
-            attributeChangedCallback(attr, _oldValue, newValue) {
-                this[attr] = newValue;
-            }
-            $destroy() {
-                destroy_component(this, 1);
-                this.$destroy = noop;
-            }
-            $on(type, callback) {
-                // TODO should this delegate to addEventListener?
-                const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
-                callbacks.push(callback);
-                return () => {
-                    const index = callbacks.indexOf(callback);
-                    if (index !== -1)
-                        callbacks.splice(index, 1);
-                };
-            }
-            $set($$props) {
-                if (this.$$set && !is_empty($$props)) {
-                    this.$$.skip_bound = true;
-                    this.$$set($$props);
-                    this.$$.skip_bound = false;
-                }
-            }
-        };
+        }
     }
 
     function dispatch_dev(type, detail) {
         document.dispatchEvent(custom_event(type, Object.assign({ version: '3.24.1' }, detail)));
+    }
+    function append_dev(target, node) {
+        dispatch_dev("SvelteDOMInsert", { target, node });
+        append(target, node);
     }
     function insert_dev(target, node, anchor) {
         dispatch_dev("SvelteDOMInsert", { target, node, anchor });
@@ -263,6 +278,22 @@ this.hello.svelte = (function () {
         dispatch_dev("SvelteDOMRemove", { node });
         detach(node);
     }
+    function attr_dev(node, attribute, value) {
+        attr(node, attribute, value);
+        if (value == null)
+            dispatch_dev("SvelteDOMRemoveAttribute", { node, attribute });
+        else
+            dispatch_dev("SvelteDOMSetAttribute", { node, attribute, value });
+    }
+    function validate_each_argument(arg) {
+        if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
+            let msg = '{#each} only iterates over array-like objects.';
+            if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+                msg += ' You can use a spread to convert this iterable into an array.';
+            }
+            throw new Error(msg);
+        }
+    }
     function validate_slots(name, slot, keys) {
         for (const slot_key of Object.keys(slot)) {
             if (!~keys.indexOf(slot_key)) {
@@ -270,28 +301,132 @@ this.hello.svelte = (function () {
             }
         }
     }
+    class SvelteComponentDev extends SvelteComponent {
+        constructor(options) {
+            if (!options || (!options.target && !options.$$inline)) {
+                throw new Error(`'target' is a required option`);
+            }
+            super();
+        }
+        $destroy() {
+            super.$destroy();
+            this.$destroy = () => {
+                console.warn(`Component was already destroyed`); // eslint-disable-line no-console
+            };
+        }
+        $capture_state() { }
+        $inject_state() { }
+    }
 
-    /* src/quanta/hello.svelte generated by Svelte v3.24.1 */
+    /* src/Dapp.svelte generated by Svelte v3.24.1 */
 
-    function create_fragment(ctx) {
-    	let t;
+    const file = "src/Dapp.svelte";
+
+    function get_each_context(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[1] = list[i];
+    	return child_ctx;
+    }
+
+    // (631:2) {#each components as c}
+    function create_each_block(ctx) {
+    	let script;
+    	let script_src_value;
 
     	const block = {
     		c: function create() {
-    			t = text("Hello Omo 1");
-    			this.c = noop;
+    			script = element("script");
+    			script.defer = true;
+    			if (script.src !== (script_src_value = /*c*/ ctx[1])) attr_dev(script, "src", script_src_value);
+    			add_location(script, file, 631, 4, 12597);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, script, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(script);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block.name,
+    		type: "each",
+    		source: "(631:2) {#each components as c}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment(ctx) {
+    	let each_1_anchor;
+    	let t;
+    	let omo_core;
+    	let each_value = /*components*/ ctx[0];
+    	validate_each_argument(each_value);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    			t = space();
+    			omo_core = element("omo-core");
+    			add_location(omo_core, file, 637, 0, 12661);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(document.head, null);
+    			}
+
+    			append_dev(document.head, each_1_anchor);
     			insert_dev(target, t, anchor);
+    			insert_dev(target, omo_core, anchor);
     		},
-    		p: noop,
+    		p: function update(ctx, [dirty]) {
+    			if (dirty & /*components*/ 1) {
+    				each_value = /*components*/ ctx[0];
+    				validate_each_argument(each_value);
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value.length;
+    			}
+    		},
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
+    			destroy_each(each_blocks, detaching);
+    			detach_dev(each_1_anchor);
     			if (detaching) detach_dev(t);
+    			if (detaching) detach_dev(omo_core);
     		}
     	};
 
@@ -306,34 +441,48 @@ this.hello.svelte = (function () {
     	return block;
     }
 
-    function instance($$self, $$props) {
+    function instance($$self, $$props, $$invalidate) {
+    	let components = ["quanta/omo-core.svelte.js"];
     	const writable_props = [];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<omo-hello> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Dapp> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
-    	validate_slots("omo-hello", $$slots, []);
-    	return [];
+    	validate_slots("Dapp", $$slots, []);
+    	$$self.$capture_state = () => ({ components });
+
+    	$$self.$inject_state = $$props => {
+    		if ("components" in $$props) $$invalidate(0, components = $$props.components);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [components];
     }
 
-    class Hello extends SvelteElement {
+    class Dapp extends SvelteComponentDev {
     	constructor(options) {
-    		super();
-    		init(this, { target: this.shadowRoot }, instance, create_fragment, not_equal, {});
+    		super(options);
+    		init(this, options, instance, create_fragment, safe_not_equal, {});
 
-    		if (options) {
-    			if (options.target) {
-    				insert_dev(options.target, this, options.anchor);
-    			}
-    		}
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Dapp",
+    			options,
+    			id: create_fragment.name
+    		});
     	}
     }
 
-    customElements.define("omo-hello", Hello);
+    const dapp = new Dapp({
+        target: document.body,
+    });
 
-    return Hello;
+    return dapp;
 
 }());
-//# sourceMappingURL=hello.svelte.js.map
+//# sourceMappingURL=dapp.js.map
