@@ -328,7 +328,7 @@ var dapp = (function () {
     	return child_ctx;
     }
 
-    // (631:2) {#each components as c}
+    // (69711:2) {#each components as c}
     function create_each_block(ctx) {
     	let script;
     	let script_src_value;
@@ -338,7 +338,7 @@ var dapp = (function () {
     			script = element("script");
     			script.defer = true;
     			if (script.src !== (script_src_value = /*c*/ ctx[1])) attr_dev(script, "src", script_src_value);
-    			add_location(script, file, 631, 4, 12597);
+    			add_location(script, file, 69711, 4, 1530706);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, script, anchor);
@@ -353,7 +353,7 @@ var dapp = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(631:2) {#each components as c}",
+    		source: "(69711:2) {#each components as c}",
     		ctx
     	});
 
@@ -381,7 +381,7 @@ var dapp = (function () {
     			each_1_anchor = empty();
     			t = space();
     			omo_core = element("omo-core");
-    			add_location(omo_core, file, 637, 0, 12661);
+    			add_location(omo_core, file, 69717, 0, 1530770);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");

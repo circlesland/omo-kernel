@@ -4,8 +4,8 @@
 
 <style global>
   @tailwind base;
-  /* @tailwind components;
-  @tailwind utilities; */
+  @tailwind components;
+  @tailwind utilities;
 </style>
 
 <svelte:head>

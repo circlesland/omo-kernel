@@ -106,7 +106,11 @@ dist
 src/**/*.js
 src/**/*.js.map 
 
-
 .textile/
-public/bundle.js
+public/dapp.js
+public/dapp.js.map
+public/dapp.css
+public/dapp.css.map
+public/quanta
+public/textileseed
 
