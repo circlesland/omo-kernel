@@ -1,8 +1,5 @@
 <script lang="ts">
-  let components = [
-    "quanta/omo-hello.svelte.js",
-    "quanta/omo-button.svelte.js",
-  ];
+  let components = ["quanta/omo-hello.svelte.js", "quanta/omo-hero.svelte.js"];
 </script>
 
 <style global>
@@ -17,5 +14,4 @@
   {/each}
 </svelte:head>
 
-<omo-button />
-<omo-hello />
+<omo-hero />

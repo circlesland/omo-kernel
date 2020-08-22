@@ -2,9 +2,7 @@ import svelte from "rollup-plugin-svelte";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import livereload from "rollup-plugin-livereload";
-import {
-  terser
-} from "rollup-plugin-terser";
+import { terser } from "rollup-plugin-terser";
 import sveltePreprocess from "svelte-preprocess";
 import typescript from "@rollup/plugin-typescript";
 import fs from "fs";
@@ -22,7 +20,7 @@ function readDirectory(dir, fileList = []) {
       fileList.push({
         name: file,
         path: filePath,
-        contents: Helper.readDirectory(filePath),
+        contents: readDirectory(filePath),
       });
     } else {
       fileList.push({
@@ -46,7 +44,8 @@ function serve() {
       if (server) return;
       server = require("child_process").spawn(
         "npm",
-        ["run", "start", "--", "--dev"], {
+        ["run", "start", "--", "--dev"],
+        {
           stdio: ["ignore", "inherit", "inherit"],
           shell: true,
         }
@@ -108,59 +107,63 @@ function createRollupConfig(input, name) {
   };
 }
 
-let configArr = [{
-  input: "src/omodapp.ts",
-  output: {
-    sourcemap: true,
-    format: "iife",
-    name: "omodapp",
-    file: "public/quanta/omodapp.js",
-  },
-  plugins: [
-    svelte({
-      // enable run-time checks when not in production
-      dev: !production,
-      // we'll extract any component CSS out into
-      // a separate file - better for performance
-      // css: (css) => {
-      //   css.write("public/quanta/omodapp.css");
-      // },
-      preprocess: sveltePreprocess({
-        postcss: true,
+let configArr = [
+  {
+    input: "src/dapp.ts",
+    output: {
+      sourcemap: true,
+      format: "iife",
+      name: "dapp",
+      file: "public/dapp.js",
+    },
+    plugins: [
+      svelte({
+        // enable run-time checks when not in production
+        dev: !production,
+        // we'll extract any component CSS out into
+        // a separate file - better for performance
+        // css: (css) => {
+        //   css.write("public/quanta/omodapp.css");
+        // },
+        preprocess: sveltePreprocess({
+          postcss: true,
+        }),
       }),
-    }),
 
-    // If you have external dependencies installed from
-    // npm, you'll most likely need these plugins. In
-    // some cases you'll need additional configuration -
-    // consult the documentation for details:
-    // https://github.com/rollup/plugins/tree/master/packages/commonjs
-    resolve({
-      browser: true,
-      dedupe: ["svelte"],
-    }),
-    commonjs(),
-    typescript({
-      sourceMap: !production,
-    }),
+      // If you have external dependencies installed from
+      // npm, you'll most likely need these plugins. In
+      // some cases you'll need additional configuration -
+      // consult the documentation for details:
+      // https://github.com/rollup/plugins/tree/master/packages/commonjs
+      resolve({
+        browser: true,
+        dedupe: ["svelte"],
+      }),
+      commonjs(),
+      typescript({
+        sourceMap: !production,
+      }),
 
-    // In dev mode, call `npm run start` once
-    // the bundle has been generated
-    !production && serve(),
+      // In dev mode, call `npm run start` once
+      // the bundle has been generated
+      !production && serve(),
 
-    // Watch the `public` directory and refresh the
-    // browser on changes when not in production
-    !production && livereload("public"),
+      // Watch the `public` directory and refresh the
+      // browser on changes when not in production
+      !production && livereload("public"),
 
-    // If we're building for production (npm run build
-    // instead of npm run dev), minify
-    production && terser(),
-  ],
-  watch: {
-    clearScreen: false,
+      // If we're building for production (npm run build
+      // instead of npm run dev), minify
+      production && terser(),
+    ],
+    watch: {
+      clearScreen: false,
+    },
   },
-}, ];
+];
 
-all.forEach((o) => configArr.push(createRollupConfig(o.path, o.name)));
+all
+  .filter((o) => o.path.endsWith(".svelte"))
+  .forEach((o) => configArr.push(createRollupConfig(o.path, o.name)));
 
 export default configArr;

@@ -27,8 +27,8 @@
         similique...
       </p>
       <div class="flex items-center justify-between mt-2 mx-6">
-        <a href="#" class="text-blue-500 text-xs -ml-3 ">Show More</a>
-        <a href="#" class="flex text-gray-700">
+        <a href="/" class="text-blue-500 text-xs -ml-3 ">Show More</a>
+        <a href="/" class="flex text-gray-700">
           <svg
             fill="none"
             viewBox="0 0 24 24"
@@ -52,7 +52,7 @@
             alt="avatar" />
         </div>
         <h2 class="text-sm tracking-tighter text-gray-900">
-          <a href="#">By Mohammed Ibrahim</a>
+          <a href="/">By Mohammed Ibrahim</a>
           <span class="text-gray-600">21 SEP 2015.</span>
         </h2>
       </div>

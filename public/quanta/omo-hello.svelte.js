@@ -384,7 +384,7 @@ this['omo-hello'].svelte = (function () {
     			add_location(h20, file, 72076, 6, 1428022);
     			attr_dev(p, "class", "text-sm text-gray-700 px-2 mr-1");
     			add_location(p, file, 72079, 6, 1428147);
-    			attr_dev(a0, "href", "#");
+    			attr_dev(a0, "href", "/");
     			attr_dev(a0, "class", "text-blue-500 text-xs -ml-3 ");
     			add_location(a0, file, 72086, 8, 1428521);
     			attr_dev(path, "stroke-linecap", "round");
@@ -397,7 +397,7 @@ this['omo-hello'].svelte = (function () {
     			attr_dev(svg, "class", "w-6 h-6 text-blue-500");
     			attr_dev(svg, "stroke", "currentColor");
     			add_location(svg, file, 72088, 10, 1428642);
-    			attr_dev(a1, "href", "#");
+    			attr_dev(a1, "href", "/");
     			attr_dev(a1, "class", "flex text-gray-700");
     			add_location(a1, file, 72087, 8, 1428592);
     			attr_dev(div1, "class", "flex items-center justify-between mt-2 mx-6");
@@ -408,7 +408,7 @@ this['omo-hello'].svelte = (function () {
     			add_location(img1, file, 72105, 10, 1429198);
     			attr_dev(div2, "class", "user-logo");
     			add_location(div2, file, 72104, 8, 1429164);
-    			attr_dev(a2, "href", "#");
+    			attr_dev(a2, "href", "/");
     			add_location(a2, file, 72111, 10, 1429536);
     			attr_dev(span, "class", "text-gray-600");
     			add_location(span, file, 72112, 10, 1429582);
